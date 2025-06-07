@@ -1,18 +1,20 @@
-import express from "express";
+import express, { json } from "express";
 import dotenv from "dotenv";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { connectDb } from "./config/dbConnection.js";
 
 const contactRoutes = (await import("./routes/contactRoutes.js")).default;
+const userRoutes = (await import("./routes/userRoutes.js")).default;
 
 dotenv.config();
 connectDb();
-const app = express();
+const app = express(json());
 
 const PORT = process.env.PORT || 3003;
 
 app.use(express.json());
 app.use("/api/contacts", contactRoutes);
+app.use("/api/user", userRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {

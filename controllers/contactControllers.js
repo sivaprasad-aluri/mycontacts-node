@@ -3,15 +3,15 @@ import { contactModel } from "../models/contactModel.js";
 
 //@desc Get all contacts
 //@route GET /api/contact
-//@access public
+//@access private
 const getContacts = asyncHandler(async (req, res) => {
-  const contacts = await contactModel.find();
+  const contacts = await contactModel.find({ user_id: req.user.id });
   res.status(200).json(contacts);
 });
 
 //@desc Get single contacts
 //@route GET /api/contact
-//@access public
+//@access private
 const getContact = asyncHandler(async (req, res) => {
   const contact = await contactModel.findById(req.params.id);
   if (!contact) {
@@ -23,7 +23,7 @@ const getContact = asyncHandler(async (req, res) => {
 
 //@desc create contact!
 //@route GET /api/contact
-//@access public
+//@access private
 const createContact = asyncHandler(async (req, res) => {
   const { name, email, phone } = req.body;
 
@@ -36,6 +36,7 @@ const createContact = asyncHandler(async (req, res) => {
     name,
     email,
     phone,
+    user_id: req.user.id,
   });
 
   res.status(201).json(contact);
@@ -43,7 +44,7 @@ const createContact = asyncHandler(async (req, res) => {
 
 //@desc Update contact!
 //@route GET /api/contact
-//@access public
+//@access private
 const updateContact = asyncHandler(async (req, res) => {
   const contact = await contactModel.findById(req.params.id);
 
@@ -51,6 +52,12 @@ const updateContact = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Contact Not Found!!!");
   }
+
+  if (contact.user_id.toString() !== req.user.id) {
+    res.status(403);
+    throw new Error("Unknown User: Not Authorized to update the user!!");
+  }
+
   const updateContact = await contactModel.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -63,14 +70,20 @@ const updateContact = asyncHandler(async (req, res) => {
 
 //@desc Delete contact!
 //@route GET /api/contact
-//@access public
+//@access private
 const deleteContact = asyncHandler(async (req, res) => {
   const contact = await contactModel.findById(req.params.id);
   if (!contact) {
     res.status(404);
     throw new Error("Contact Not Found!!!");
   }
-  await contactModel.deleteOne();
+
+  if (contact.user_id.toString() !== req.user.id) {
+    res.status(403);
+    throw new Error("Unknown User: Not Authorized to delete the user!");
+  }
+
+  await contactModel.deleteOne({ _id: req.params.id });
   res.status(200).json(contact);
 });
 
